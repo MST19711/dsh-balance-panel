@@ -246,6 +246,18 @@ async function runCase(label, { provider, model, keyValue, baseURL, apiKeyEnv, f
 }
 
 {
+  // 插件自持路由：不挂 llm-pi-ai.providers，因此没有 settings 节点（baseURL 规则失效），
+  // 必须靠 id 认领；凭据走本后端默认引用名兜底。
+  const { out, calls } = await runCase('ocgo-auto-route', {
+    provider: 'opencode-go-auto', model: 'deepseek-flash', apiKeyEnv: 'OPENCODE_GO_API_KEY', keyValue: 'sk-test-key',
+    fetchImpl: async () => new Response(JSON.stringify({ usage: { weekly: { status: 'ok', percent: 40 } } }), { status: 200 }),
+  })
+  check('opencode-go-auto(无 settings 节点)被认领', out.body.isSupported === true, `backendId=${out.body.backendId}`)
+  check('opencode-go-auto 归 opencode-go 后端', out.body.backendId === 'opencode-go', String(out.body.backendId))
+  check('opencode-go-auto 打同一 usage 接口', calls[0]?.url === 'https://opencode.ai/zen/go/v1/usage', calls[0]?.url)
+}
+
+{
   const { out } = await runCase('zai-route', {
     provider: 'zai', model: 'glm-5.3-flash', keyValue: 'sk-test-key',
     baseURL: 'https://open.bigmodel.cn/api/paas/v4',

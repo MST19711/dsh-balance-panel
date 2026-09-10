@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-balance-panel",
   "description": "Extensible balance/usage panel for the DeepSeek Harness Web UI: a floating card on the right edge that auto-selects a backend by the current session's provider. Backends: OpenCode Go (subscription quota windows with progress bars), Zhipu open platform (pay-as-you-go cash balance, money-only rows), and DeepSeek open platform (pay-as-you-go cash balance via the official /user/balance endpoint). Adding a provider = registering one backend object.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "license": "MIT",
   "type": "module",
