@@ -13,6 +13,7 @@
 |---|---|---|---|
 | `opencode-go` | id `opencode-go`,或 baseURL 指向 `opencode.ai/zen` 的自定义路由 | 订阅配额(有窗口、有重置) | 5h 滚动 / 本周 / 本月三行「剩余百分比 + 重置倒计时 + 进度条」;剩 ≤30% 橙、≤10% 红 |
 | `zhipu` | id `zhipu`,或 baseURL 指向 `bigmodel.cn` 的路由(含被改到按量计费端点的 `zai-coding-cn` —— 同一现金池) | 按量计费现金余额(**无配额窗口,不存在「剩余比例」语义**) | 纯金额行:可用余额(加粗)/ 累计充值 / 累计消费;赠送、冻结仅在非零时出现;徽章圆点按绝对余额提醒(<¥10 红、<¥50 橙) |
+| `deepseek` | id `deepseek-official`(内置 `llm-deepseek` 插件独占的路由)或 id `deepseek`,或 baseURL 指向 `api.deepseek.com` 的自定义路由 | 按量计费现金余额(同 zhipu 语义) | 纯金额行:可用余额(加粗)/ 其中充值、其中赠送(非零才出现);`is_available: false` 时追加「账户状态: 已欠费停用」行;徽章圆点按币种阈值提醒 — CNY <¥10 红 / <¥50 橙,USD <$2 红 / <$10 橙 |
 
 ## 扩展一个新供应商
 
@@ -45,8 +46,20 @@
 
 - 后端各自代理调用上游官方/控制台接口,API key 只经 DSH `credentials` 服务在服务端进程内解析,
   **key 永不进入浏览器、不写日志**;
-- 各后端独立缓存(OpenCode Go 15s,智谱 5min),失败不缓存、下次轮询重试;
+- 各后端独立缓存(OpenCode Go 15s,智谱 / DeepSeek 各 5min),失败不缓存、下次轮询重试;
 - 路由有同源/loopback 防护,跨站读取返回 403。
+
+## 验证
+
+```bash
+node test-deepseek-backend.mjs          # 离线:假 ctx + 假上游,31 项断言(先跑这个)
+node test-deepseek-backend.mjs --live   # 追加:真实 DEEPSEEK_API_KEY 打真实上游
+```
+
+夹具直接 import `lib/index.js` 并用假 `ctx`(credentials / settings / agents / webServer)
+驱动它自己的 HTTP handler,**不需要重启 DSH** 就能验证「认领 → 解析 key → 打上游 →
+归一化 panel」整条链路;含 zhipu / opencode-go / zai 路由不被抢走的回归用例。
+`--live` 会读取 `~/.dsh/.credentials.yaml` 里的 key(只用于本地断言,不回显)。
 
 ## 界面
 
